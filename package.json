@@ -1,0 +1,19 @@
+{
+  "name": "puhelinluettelo-backend",
+  "version": "0.0.1",
+  "description": "Backend for puhelinluettelo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juhamyllari/puhelinluettelo-backend.git"
+  },
+  "author": "Juha Mylläri",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/juhamyllari/puhelinluettelo-backend/issues"
+  },
+  "homepage": "https://github.com/juhamyllari/puhelinluettelo-backend#readme"
+}
