@@ -8,13 +8,13 @@ const Person = require('./models/person')
 
 const MAX_ID_FACTOR = 1e9
 
+app.use(express.static('build'))
 app.use(bodyParser.json())
 morgan.token('body', (req, res) => {
   return JSON.stringify(req.body)
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use(cors())
-app.use(express.static('build'))
 
 app.get('/api/persons', (req, res) => {
   Person.find({}).then(persons => {
@@ -22,25 +22,31 @@ app.get('/api/persons', (req, res) => {
   })
 })
 
-app.get('/api/persons/:id', (req, res) => {
-  Person.findById(req.params.id).then(person => {
-    res.json(person.toJSON())
-  })
+app.get('/api/persons/:id', (req, res, next) => {
+  Person.findById(req.params.id)
+    .then(person => {
+      if (person) {
+        res.json(person.toJSON())
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const person = persons.find(p => p.id === id)
-  if (person) {
-    persons = persons.filter(p => p.id !== id)
-    res.status(204).end()
-  } else {
-    res.status(404).end()
-  }
+  Person.findByIdAndRemove(req.params.id)
+    .then(result => {
+      res.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 app.get('/info', (req, res) => {
-    res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p><p>${new Date()}</p>`)
+  Person.estimatedDocumentCount()
+    .then(result => {
+      res.send(`<p>Puhelinluettelossa ${result} henkilön tiedot</p><p>${new Date()}</p>`)
+    })
 })
 
 app.post('/api/persons/', (req, res) => {
@@ -61,10 +67,36 @@ app.post('/api/persons/', (req, res) => {
 
   const person = Person(body)
 
-  person.save().then(savedPerson => {
-    res.json(savedPerson.toJSON())
-  })
+  person.save()
+    .then(savedPerson => {
+      res.json(savedPerson.toJSON())
+    })
+    .catch(error => next(error))
 })
+
+app.put('/api/persons/:id', (req, res) => {
+  Person.findByIdAndUpdate(req.params.id, {number: req.body.number}, {new: true})
+    .then(updatedPerson => {
+      res.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+  next(error)
+}
+
+app.use(errorHandler)
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
