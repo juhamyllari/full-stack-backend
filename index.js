@@ -5,10 +5,8 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const bodyParser = require('body-parser')
-var morgan = require('morgan')
+const morgan = require('morgan')
 const Person = require('./models/person')
-
-const MAX_ID_FACTOR = 1e9
 
 app.use(express.static('build'))
 app.use(bodyParser.json())
@@ -54,19 +52,6 @@ app.get('/info', (req, res) => {
 app.post('/api/persons/', (req, res, next) => {
 
   const body = req.body
-
-  if (body.name === "") {
-    return res.status(400).json({
-      error: 'name missing'
-    })
-  }
-
-  if (body.number === "") {
-    return res.status(400).json({
-      error: 'number missing'
-    })
-  }
-
   const person = Person(body)
 
   person.save()
@@ -77,7 +62,7 @@ app.post('/api/persons/', (req, res, next) => {
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
-  Person.findByIdAndUpdate(req.params.id, {number: req.body.number}, {new: true})
+  Person.findByIdAndUpdate(req.params.id, { number: req.body.number }, { new: true })
     .then(updatedPerson => {
       res.json(updatedPerson)
     })
@@ -86,7 +71,7 @@ app.put('/api/persons/:id', (req, res, next) => {
 
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
-  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+  if (error.name === 'CastError' && error.kind === 'ObjectId') {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message })
@@ -104,5 +89,5 @@ app.use(unknownEndpoint)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })
